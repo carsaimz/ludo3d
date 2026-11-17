@@ -1,0 +1,33 @@
+{
+  "name": "ludo3d",
+  "private": true,
+  "version": "1.0.0",
+  "description": "LUDO 3D - jogo de Ludo tridimensional realista inspirado em Ludo King / Ludo Master",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "author": "carsaimz",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cap:sync": "npm run build && cap sync"
+  },
+  "dependencies": {
+    "cannon-es": "^0.20.0",
+    "three": "0.169.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@types/three": "0.169.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.8",
+    "vitest": "^2.1.1"
+  }
+}

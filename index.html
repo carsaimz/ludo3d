@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="LUDO 3D - o clássico jogo de Ludo em 3D realista, inspirado em Ludo King / Ludo Master." />
+  <title>LUDO 3D</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='6' width='52' height='52' rx='14' fill='%23f24537'/%3E%3Ccircle cx='22' cy='22' r='6' fill='%23fff'/%3E%3Ccircle cx='42' cy='22' r='6' fill='%23fff'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23fff'/%3E%3Ccircle cx='22' cy='42' r='6' fill='%23fff'/%3E%3Ccircle cx='42' cy='42' r='6' fill='%23fff'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <div id="vignette"></div>
+
+  <!-- HUD durante a partida -->
+  <div id="hud" class="hidden">
+    <div id="cards"></div>
+    <div id="topbar">
+      <button id="btnSound" class="iconbtn" title="Som" aria-label="Som"></button>
+      <button id="btnCam" class="iconbtn" title="Câmera automática" aria-label="Câmera automática"></button>
+      <button id="btnMenu" class="iconbtn" title="Menu" aria-label="Menu"></button>
+    </div>
+    <div id="hint"></div>
+    <button id="rollBtn" class="hidden">JOGAR DADO</button>
+    <div id="toasts"></div>
+  </div>
+
+  <!-- Menus e painéis -->
+  <div id="menu" class="overlay">
+    <div class="panel" id="panelMain">
+      <h1 class="logo">LUDO <span>3D</span></h1>
+      <p class="tagline">O clássico jogo de Ludo em 3D</p>
+      <button id="btnPlay" class="btn primary big">JOGAR</button>
+      <button id="btnHow" class="btn">COMO JOGAR</button>
+      <div class="settingsRow">
+        <button id="btnSoundMenu" class="chip toggle"></button>
+        <button id="btnCamMenu" class="chip toggle"></button>
+      </div>
+      <p class="credit">LUDO 3D - com.ludo3d</p>
+    </div>
+
+    <div class="panel hidden" id="panelSetup">
+      <h2>NOVA PARTIDA</h2>
+      <div class="fieldLabel">Modo de jogo</div>
+      <div class="segRow" id="segMode">
+        <button class="seg active" data-v="cpu">Contra o CPU</button>
+        <button class="seg" data-v="local">Passar e jogar</button>
+      </div>
+      <div class="fieldLabel">Jogadores</div>
+      <div class="segRow" id="segCount">
+        <button class="seg" data-v="2">2</button>
+        <button class="seg" data-v="3">3</button>
+        <button class="seg active" data-v="4">4</button>
+      </div>
+      <div class="fieldLabel" id="lblColor">Sua cor</div>
+      <div class="colorRow" id="colorRow">
+        <button class="colorchip red active" data-c="red" title="Vermelho"></button>
+        <button class="colorchip green" data-c="green" title="Verde"></button>
+        <button class="colorchip yellow" data-c="yellow" title="Amarelo"></button>
+        <button class="colorchip blue" data-c="blue" title="Azul"></button>
+      </div>
+      <button id="btnStart" class="btn primary big">COMEÇAR</button>
+      <button id="btnBackMain" class="btn ghost">Voltar</button>
+    </div>
+
+    <div class="panel hidden" id="panelHow">
+      <h2>COMO JOGAR</h2>
+      <div class="helpText">
+        <p><b>Objetivo:</b> levar as suas 4 peças até o centro do tabuleiro antes dos adversários.</p>
+        <p><b>Sair da base:</b> só com um 6 no dado. Ao tirar 6, joga novamente.</p>
+        <p><b>Capturar:</b> caindo sobre uma peça adversária, ela volta para a base e você ganha uma jogada extra.</p>
+        <p><b>Casas seguras:</b> casas com estrela e casas de partida coloridas protegem contra captura. Duas ou mais peças da mesma cor na mesma casa formam um bloco.</p>
+        <p><b>Três 6 seguidos:</b> perde a vez.</p>
+        <p><b>Chegada:</b> é preciso número exato no dado para entrar no centro. Quem levar as 4 peças primeiro vence.</p>
+      </div>
+      <button id="btnBackMain2" class="btn">Voltar</button>
+    </div>
+
+    <div class="panel hidden" id="panelPause">
+      <h2>PAUSA</h2>
+      <button id="btnResume" class="btn primary big">CONTINUAR</button>
+      <button id="btnRestart" class="btn">REINICIAR PARTIDA</button>
+      <button id="btnQuit" class="btn ghost">SAIR PARA O MENU</button>
+    </div>
+
+    <div class="panel hidden" id="panelWin">
+      <h2 id="winTitle">VITÓRIA!</h2>
+      <div id="standings"></div>
+      <button id="btnAgain" class="btn primary big">JOGAR NOVAMENTE</button>
+      <button id="btnWinMenu" class="btn ghost">MENU PRINCIPAL</button>
+    </div>
+  </div>
+
+  <canvas id="confetti" class="hidden"></canvas>
+
+  <!-- Splash de carregamento -->
+  <div id="splash">
+    <div class="dieSpin"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="splashTitle">LUDO <span>3D</span></div>
+    <div class="splashMsg">Preparando o tabuleiro...</div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
