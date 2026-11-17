@@ -1,0 +1,55 @@
+name: Android Beta APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build web assets
+        run: npm run build
+      - name: Sync Capacitor
+        run: npx cap sync android
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Build debug APK (beta, debug-signed)
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+      - name: Rename APK
+        run: |
+          mkdir -p dist-apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk dist-apk/LUDO3D-Beta-debug.apk
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LUDO3D-Beta-APK
+          path: dist-apk/LUDO3D-Beta-debug.apk
+          retention-days: 90
+      - name: Attach APK to "beta" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view beta --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create beta --repo "$GITHUB_REPOSITORY" --prerelease \
+              --title "LUDO 3D Beta" \
+              --notes "Beta APK (debug-signed, appId com.carsaimz.ludo3d.beta). Install by allowing unknown apps on Android." \
+              dist-apk/LUDO3D-Beta-debug.apk
+          gh release upload beta dist-apk/LUDO3D-Beta-debug.apk --repo "$GITHUB_REPOSITORY" --clobber

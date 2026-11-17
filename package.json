@@ -1,0 +1,43 @@
+{
+  "name": "ludo3d",
+  "private": true,
+  "version": "1.0.0-beta.1",
+  "description": "LUDO 3D - realistic 3D Ludo game (Three.js) with P2P online multiplayer, offline bots and beta APK builds",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "cap:sync": "vite build && cap sync android",
+    "cap:android": "cap open android",
+    "desktop": "electron electron/main.cjs",
+    "dist:desktop": "electron-builder"
+  },
+  "dependencies": {
+    "three": "^0.180.0",
+    "trystero": "^0.21.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.1.4"
+  },
+  "build": {
+    "appId": "com.ludo3d",
+    "productName": "LUDO 3D",
+    "files": ["dist/**/*", "electron/**/*"],
+    "directories": { "output": "release" },
+    "win": { "target": ["nsis", "portable"], "icon": "assets/icon.ico" },
+    "linux": { "target": ["AppImage", "tar.gz"], "icon": "assets/icon.png", "category": "Game" },
+    "mac": { "target": ["dmg", "zip"], "icon": "assets/icon.png", "category": "public.app-category.games" }
+  }
+}

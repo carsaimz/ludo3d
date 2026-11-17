@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1524" />
+  <meta name="description" content="LUDO 3D - realistic 3D Ludo board game with online P2P multiplayer" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="icon" type="image/png" href="./icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-180.png" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <title>LUDO 3D</title>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <div id="vignette"></div>
+
+  <!-- ================= MAIN MENU ================= -->
+  <section id="screen-menu" class="screen">
+    <div class="menu-card">
+      <div class="logo">
+        <svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
+          <rect x="3" y="3" width="42" height="42" rx="11" fill="#0e1c30" stroke="#f6b73c" stroke-width="2.5"/>
+          <circle cx="15" cy="15" r="3.6" fill="#e53935"/>
+          <circle cx="33" cy="15" r="3.6" fill="#1e88e5"/>
+          <circle cx="15" cy="33" r="3.6" fill="#43a047"/>
+          <circle cx="33" cy="33" r="3.6" fill="#fdd835"/>
+          <circle cx="24" cy="24" r="3.6" fill="#f6f1e6"/>
+        </svg>
+        <h1 class="wordmark">LUDO<span>3D</span></h1>
+      </div>
+      <p class="tagline" data-i18n="tagline"></p>
+
+      <div id="menu-actions" class="menu-actions">
+        <button id="btn-local" class="btn btn-primary btn-big">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 3c2.2 0 4 1.7 4 3.9 0 1.5-.8 2.7-2 3.4l.5 3.2h3.2c1 0 1.8.8 1.8 1.8V19H4.5v-3.7c0-1 .8-1.8 1.8-1.8h3.2l.5-3.2c-1.2-.7-2-1.9-2-3.4C8 4.7 9.8 3 12 3Z" fill="currentColor"/></svg>
+          <span data-i18n="playLocal"></span>
+        </button>
+        <button id="btn-bots" class="btn btn-primary btn-big">
+          <svg class="ic" viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="11" rx="3" fill="currentColor"/><circle cx="9.5" cy="12" r="1.6" fill="#0b1524"/><circle cx="14.5" cy="12" r="1.6" fill="#0b1524"/><path d="M12 7V4M12 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 15.5h4" stroke="#0b1524" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span data-i18n="playBots"></span>
+        </button>
+        <button id="btn-online" class="btn btn-primary btn-big">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.3 4 5.2 4 8.5s-1.4 6.2-4 8.5c-2.6-2.3-4-5.2-4-8.5s1.4-6.2 4-8.5Z"/></svg>
+          <span data-i18n="playOnline"></span>
+        </button>
+        <div class="menu-row">
+          <button id="btn-settings" class="btn btn-ghost">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"/></svg>
+            <span data-i18n="settings"></span>
+          </button>
+          <button id="btn-help" class="btn btn-ghost">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.3A2.6 2.6 0 0 1 12 7.8c1.4 0 2.5 1 2.5 2.3 0 1.6-1.6 1.9-2.3 3-.1.2-.2.5-.2 1" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+            <span data-i18n="howToPlay"></span>
+          </button>
+        </div>
+      </div>
+
+      <div id="local-setup" class="setup hidden">
+        <h2 data-i18n="localPlayers"></h2>
+        <div class="seg" id="seg-local-count">
+          <button data-v="2" class="on">2</button><button data-v="3">3</button><button data-v="4">4</button>
+        </div>
+        <div class="setup-actions">
+          <button id="btn-local-start" class="btn btn-gold"><svg class="ic" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor"/></svg><span data-i18n="start"></span></button>
+          <button id="btn-local-back" class="btn btn-ghost" data-i18n="back"></button>
+        </div>
+      </div>
+
+      <div id="bots-setup" class="setup hidden">
+        <h2 data-i18n="botsCount"></h2>
+        <div class="seg" id="seg-bots-count">
+          <button data-v="1" class="on">1</button><button data-v="2">2</button><button data-v="3">3</button>
+        </div>
+        <div class="setup-actions">
+          <button id="btn-bots-start" class="btn btn-gold"><svg class="ic" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor"/></svg><span data-i18n="start"></span></button>
+          <button id="btn-bots-back" class="btn btn-ghost" data-i18n="back"></button>
+        </div>
+      </div>
+    </div>
+    <p class="version">LUDO 3D · v1.0.0-beta</p>
+  </section>
+
+  <!-- ================= GAME HUD ================= -->
+  <div id="hud" class="hidden">
+    <div class="topbar">
+      <button id="btn-pause" class="iconbtn" aria-label="menu">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+      <div id="turn-banner" class="turn-banner">
+        <span class="turn-dot" id="turn-dot"></span>
+        <span id="turn-text"></span>
+      </div>
+      <button id="btn-sound" class="iconbtn" aria-label="sound">
+        <svg class="ic" id="ic-sound" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4Z" fill="currentColor"/><path d="M15 9c1 .8 1.5 1.8 1.5 3s-.5 2.2-1.5 3" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M17.5 6.8c1.7 1.3 2.6 3.1 2.6 5.2s-.9 3.9-2.6 5.2" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <button id="btn-cam" class="iconbtn" aria-label="camera">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6.5" width="13" height="11" rx="2.5"/><path d="m16 12 5-3.2v6.4L16 12Z" fill="currentColor" stroke="none"/><circle cx="9.5" cy="12" r="2.6"/></svg>
+      </button>
+    </div>
+
+    <div id="player-cards"></div>
+
+    <button id="btn-roll" class="roll-btn hidden">
+      <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4.5" fill="currentColor"/><circle cx="8.2" cy="8.2" r="1.7" fill="#0b1524"/><circle cx="15.8" cy="8.2" r="1.7" fill="#0b1524"/><circle cx="12" cy="12" r="1.7" fill="#0b1524"/><circle cx="8.2" cy="15.8" r="1.7" fill="#0b1524"/><circle cx="15.8" cy="15.8" r="1.7" fill="#0b1524"/></svg>
+      <span data-i18n="roll"></span>
+    </button>
+
+    <div id="toasts"></div>
+    <div id="floaters"></div>
+  </div>
+
+  <!-- ================= DIALOGS ================= -->
+  <div id="dlg-settings" class="dialog hidden">
+    <div class="dlg-card">
+      <div class="dlg-head"><h2 data-i18n="settings"></h2><button class="iconbtn dlg-close"><svg class="ic" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
+      <label class="field"><span data-i18n="language"></span>
+        <div class="seg" id="seg-lang">
+          <button data-v="pt">PT</button><button data-v="en">EN</button><button data-v="es">ES</button><button data-v="fr">FR</button>
+        </div>
+      </label>
+      <label class="field"><span data-i18n="yourName"></span>
+        <input id="inp-name" type="text" maxlength="14" placeholder="" />
+      </label>
+      <label class="field row"><span data-i18n="sound"></span><input id="tgl-sound" type="checkbox" class="tgl" /></label>
+      <label class="field row"><span data-i18n="autoCamera"></span><input id="tgl-cam" type="checkbox" class="tgl" /></label>
+    </div>
+  </div>
+
+  <div id="dlg-online" class="dialog hidden">
+    <div class="dlg-card">
+      <div class="dlg-head"><h2 data-i18n="playOnline"></h2><button class="iconbtn dlg-close"><svg class="ic" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
+      <div class="seg" id="seg-online-tab">
+        <button data-v="create" class="on" data-i18n="createRoom"></button><button data-v="join" data-i18n="joinRoom"></button>
+      </div>
+      <div id="online-create" class="online-pane">
+        <button id="btn-create-room" class="btn btn-gold" data-i18n="createRoom"></button>
+        <div id="room-box" class="hidden">
+          <p class="room-label" data-i18n="roomCode"></p>
+          <div class="room-code-row">
+            <span id="room-code" class="room-code"></span>
+            <button id="btn-copy-code" class="iconbtn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/></svg></button>
+          </div>
+        </div>
+        <div id="seats-box" class="seats"></div>
+        <label class="field row hidden" id="row-bots"><span data-i18n="fillBots"></span><input id="tgl-bots" type="checkbox" class="tgl" checked /></label>
+        <button id="btn-host-start" class="btn btn-gold hidden" data-i18n="start"></button>
+        <p id="online-wait" class="wait hidden"></p>
+      </div>
+      <div id="online-join" class="online-pane hidden">
+        <label class="field"><span data-i18n="roomCode"></span>
+          <input id="inp-code" type="text" maxlength="5" autocapitalize="characters" placeholder="ABC12" />
+        </label>
+        <button id="btn-join-room" class="btn btn-gold" data-i18n="joinRoom"></button>
+        <p id="join-status" class="wait hidden"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="dlg-help" class="dialog hidden">
+    <div class="dlg-card">
+      <div class="dlg-head"><h2 data-i18n="howToPlay"></h2><button class="iconbtn dlg-close"><svg class="ic" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
+      <div id="help-body" class="help-body"></div>
+    </div>
+  </div>
+
+  <div id="dlg-pause" class="dialog hidden">
+    <div class="dlg-card">
+      <div class="dlg-head"><h2 data-i18n="paused"></h2><button class="iconbtn dlg-close"><svg class="ic" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
+      <div class="menu-actions">
+        <button id="btn-resume" class="btn btn-gold" data-i18n="resume"></button>
+        <button id="btn-restart" class="btn btn-ghost" data-i18n="restart"></button>
+        <button id="btn-exit" class="btn btn-ghost" data-i18n="exit"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="dlg-win" class="dialog hidden">
+    <div class="dlg-card win-card">
+      <svg class="crown" viewBox="0 0 64 40"><path d="M6 34 4 12l12 8 16-16 16 16 12-8-2 22H6Z" fill="#f6b73c" stroke="#b07d14" stroke-width="2"/><circle cx="4" cy="10" r="3.4" fill="#e53935"/><circle cx="32" cy="4" r="3.4" fill="#fdd835"/><circle cx="60" cy="10" r="3.4" fill="#1e88e5"/></svg>
+      <h2 id="win-title"></h2>
+      <div id="win-ranks" class="ranks"></div>
+      <div class="setup-actions">
+        <button id="btn-rematch" class="btn btn-gold" data-i18n="playAgain"></button>
+        <button id="btn-win-menu" class="btn btn-ghost" data-i18n="mainMenu"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="splash" class="splash">
+    <div class="logo">
+      <svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="3" y="3" width="42" height="42" rx="11" fill="#0e1c30" stroke="#f6b73c" stroke-width="2.5"/>
+        <circle cx="15" cy="15" r="3.6" fill="#e53935"/><circle cx="33" cy="15" r="3.6" fill="#1e88e5"/>
+        <circle cx="15" cy="33" r="3.6" fill="#43a047"/><circle cx="33" cy="33" r="3.6" fill="#fdd835"/>
+        <circle cx="24" cy="24" r="3.6" fill="#f6f1e6"/>
+      </svg>
+      <h1 class="wordmark">LUDO<span>3D</span></h1>
+    </div>
+    <div class="spin"><div></div><div></div></div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

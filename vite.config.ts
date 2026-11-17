@@ -1,0 +1,15 @@
+/// <reference types="vitest" />
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  base: './',
+  build: {
+    target: 'es2020',
+    outDir: 'dist',
+    chunkSizeWarningLimit: 1800
+  },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts']
+  }
+});
