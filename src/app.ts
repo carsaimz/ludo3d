@@ -67,6 +67,7 @@ export class App {
 
     this.stage = new Stage($('#gl') as unknown as HTMLCanvasElement);
     this.cin = new CinCam(this.stage.controls, this.stage.camera);
+    (window as unknown as Record<string, unknown>).__ludo3d = { app: this, cin: this.cin, camera: this.stage.camera, controls: this.stage.controls };
     this.board = buildBoard();
     this.stage.scene.add(this.board.group);
     this.hud = new Hud();
@@ -747,7 +748,7 @@ export class App {
     this.sfx.win();
     this.broadcast({ t: 'over', ranks });
     this.schedule(() => {
-      if (this.settings.autoCam) this.cin.focusColor(ranked[0].color, 22);
+      if (this.settings.autoCam) this.cin.focusColor(ranked[0].color, 26);
     }, 200);
   }
 

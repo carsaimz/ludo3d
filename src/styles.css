@@ -10,10 +10,10 @@
   --text-dim: #9fb0c8;
   --gold: #f6b73c;
   --gold-2: #ffd764;
-  --red: #e43131;
-  --green: #2eb23b;
-  --yellow: #fccf1f;
-  --blue: #2265e8;
+  --red: #d02126;
+  --green: #1ea32d;
+  --yellow: #efb400;
+  --blue: #1a52d8;
   --radius: 18px;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
   --safe-b: env(safe-area-inset-bottom, 0px);
@@ -168,10 +168,10 @@ body {
 .homes { display: flex; gap: 4px; }
 .home-dot { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); background: transparent; }
 .home-dot.filled { background: var(--gold-2); border-color: var(--gold); box-shadow: 0 0 6px rgba(246,183,60,.7); }
-.pc-red { background: linear-gradient(160deg, var(--red), #a32527); }
-.pc-green { background: linear-gradient(160deg, var(--green), #2c7a31); }
-.pc-yellow { background: linear-gradient(160deg, #f0b91c, #c39410); }
-.pc-blue { background: linear-gradient(160deg, var(--blue), #1a56a0); }
+.pc-red { background: linear-gradient(160deg, var(--red), #8f1216); }
+.pc-green { background: linear-gradient(160deg, var(--green), #146e1f); }
+.pc-yellow { background: linear-gradient(160deg, #f5b800, #b88400); }
+.pc-blue { background: linear-gradient(160deg, var(--blue), #123a94); }
 .card-pos-tl { top: calc(64px + var(--safe-t)); left: 12px; }
 .card-pos-tr { top: calc(64px + var(--safe-t)); right: 12px; }
 .card-pos-bl { bottom: calc(16px + var(--safe-b)); left: 12px; }

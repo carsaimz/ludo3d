@@ -43,10 +43,10 @@ export const YARD_CENTER: Record<Color, THREE.Vector2> = {
 export const YARD_SLOT = [new THREE.Vector2(-0.95, -0.95), new THREE.Vector2(0.95, -0.95), new THREE.Vector2(0.95, 0.95), new THREE.Vector2(-0.95, 0.95)];
 
 export const PALETTE: Record<Color, number> = {
-  red: 0xe43131,
-  green: 0x2eb23b,
-  yellow: 0xfccf1f,
-  blue: 0x2265e8
+  red: 0xd21f26,
+  green: 0x1da32d,
+  yellow: 0xf6bc00,
+  blue: 0x174fd4
 };
 
 export const STAR_CELLS = new Set([8, 21, 34, 47]);
@@ -97,9 +97,9 @@ function arrowShape(): THREE.Shape {
   return s;
 }
 
-/** Materials — low env-map sheen so saturated colors stay vivid instead of washing to white */
+/** Materials — saturated albedo + moderate sheen: vivid like Ludo King, never washed to white */
 function mat(color: number, opts: Partial<THREE.MeshPhysicalMaterialParameters> = {}): THREE.MeshPhysicalMaterial {
-  return new THREE.MeshPhysicalMaterial({ color, roughness: 0.5, clearcoat: 0.3, clearcoatRoughness: 0.4, envMapIntensity: 0.35, ...opts });
+  return new THREE.MeshPhysicalMaterial({ color, roughness: 0.38, clearcoat: 0.55, clearcoatRoughness: 0.28, envMapIntensity: 0.3, ...opts });
 }
 
 export function buildBoard(): BoardRefs {
@@ -112,16 +112,29 @@ export function buildBoard(): BoardRefs {
   holePath.setFromPoints(holePts);
   frameShape.holes.push(holePath);
   const frameGeo = new THREE.ExtrudeGeometry(frameShape, { depth: 0.9, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.1, bevelSegments: 4 });
-  const frame = new THREE.Mesh(frameGeo, mat(0x14243c, { roughness: 0.3, clearcoat: 0.9, metalness: 0.15, envMapIntensity: 1.0 }));
+  const frame = new THREE.Mesh(frameGeo, mat(0x991720, { roughness: 0.28, clearcoat: 0.9, clearcoatRoughness: 0.18, metalness: 0.1, envMapIntensity: 0.55 }));
   frame.rotation.x = -Math.PI / 2;
   frame.position.y = -0.7; // extrusion runs upward: ring spans y -0.7 .. +0.3
   frame.castShadow = true;
   frame.receiveShadow = true;
   group.add(frame);
 
+  // ---- gold pinstripe trim between frame and playing surface (Ludo King signature) ----
+  const trimShape = roundedRectShape(15.35, 15.35, 0.75);
+  const trimHole = new THREE.Path();
+  trimHole.setFromPoints(roundedRectShape(15.02, 15.02, 0.68).getPoints(64));
+  trimShape.holes.push(trimHole);
+  const trim = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(trimShape, { depth: 0.06, bevelEnabled: false }),
+    mat(0xf3b83a, { roughness: 0.25, clearcoat: 0.8, metalness: 0.55, envMapIntensity: 0.9 })
+  );
+  trim.rotation.x = -Math.PI / 2;
+  trim.position.y = 0.1;
+  group.add(trim);
+
   // ---- playing surface ----
   const surfGeo = new THREE.ExtrudeGeometry(roundedRectShape(15.2, 15.2, 0.7), { depth: 0.16, bevelEnabled: false });
-  const surf = new THREE.Mesh(surfGeo, mat(0xeee2c6, { roughness: 0.55, clearcoat: 0.2 }));
+  const surf = new THREE.Mesh(surfGeo, mat(0xd9c398, { roughness: 0.6, clearcoat: 0.15 }));
   surf.rotation.x = -Math.PI / 2;
   surf.position.y = -0.02;
   surf.receiveShadow = true;
@@ -130,6 +143,7 @@ export function buildBoard(): BoardRefs {
   // ---- quadrant yard panels ----
   const yardGeo = new THREE.ExtrudeGeometry(roundedRectShape(5.9, 5.9, 0.9), { depth: 0.06, bevelEnabled: false });
   const yardCircleGeo = new THREE.CylinderGeometry(1.95, 1.95, 0.07, 48);
+  const yardCircleMat = mat(0xfbf6e8, { roughness: 0.5, envMapIntensity: 0.2 });
   const tokenSlots: Record<Color, THREE.Vector3[]> = { red: [], green: [], yellow: [], blue: [] };
   (Object.keys(YARD_CENTER) as Color[]).forEach((c) => {
     const panel = new THREE.Mesh(yardGeo, mat(PALETTE[c], { roughness: 0.38 }));
@@ -139,7 +153,7 @@ export function buildBoard(): BoardRefs {
     panel.receiveShadow = true;
     group.add(panel);
 
-    const circle = new THREE.Mesh(yardCircleGeo, mat(0xfbf7ee, { roughness: 0.5, envMapIntensity: 0.45 }));
+    const circle = new THREE.Mesh(yardCircleGeo, yardCircleMat);
     circle.position.set(pos.x, 0.2, pos.y);
     circle.receiveShadow = true;
     group.add(circle);
@@ -151,7 +165,7 @@ export function buildBoard(): BoardRefs {
 
   // ---- track tiles ----
   const tileGeo = new THREE.BoxGeometry(0.94, 0.1, 0.94);
-  const tileWhite = mat(0xfdfaf2, { roughness: 0.55, envMapIntensity: 0.45 });
+  const tileWhite = mat(0xfdfdf6, { roughness: 0.5, envMapIntensity: 0.25 });
   const startIdxOf: Record<number, Color> = { 0: 'red', 13: 'green', 26: 'yellow', 39: 'blue' };
   const coloredRing: Set<number> = new Set([0, 13, 26, 39]);
   // home column tiles per color
@@ -177,7 +191,7 @@ export function buildBoard(): BoardRefs {
     if (coloredRing.has(idx)) {
       addTile(col, row, mat(PALETTE[startIdxOf[idx]]));
     } else if (colOfHomeTile.has(`${col},${row}`)) {
-      addTile(col, row, mat(0xfdfaf2));
+      addTile(col, row, mat(0xfdfdf6, { envMapIntensity: 0.25 }));
     } else {
       addTile(col, row, tileWhite);
     }
@@ -188,7 +202,7 @@ export function buildBoard(): BoardRefs {
 
   // ---- star emblems on safe cells ----
   const starGeo = new THREE.ExtrudeGeometry(starShape(0.26), { depth: 0.03, bevelEnabled: false });
-  const starMat = mat(0x3c4a63, { roughness: 0.5, clearcoat: 0.2 });
+  const starMat = mat(0x2e3c55, { roughness: 0.5, clearcoat: 0.2, metalness: 0.2 });
   for (const idx of STAR_CELLS) {
     const [col, row] = RING_CELLS[idx];
     const w = cellWorld(col, row);

@@ -32,15 +32,17 @@ export class Stage {
     this.scene = new THREE.Scene();
 
     this.camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
-    this.camera.position.set(0, 18, 21);
+    // near top-down like Ludo King (slight tilt keeps the 3D pawns readable)
+    this.camera.position.set(0, 23, 14);
 
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-    const hemi = new THREE.HemisphereLight(0xdceaff, 0x2a3040, 0.42);
+    const hemi = new THREE.HemisphereLight(0xdceaff, 0x2a3040, 0.22);
     this.scene.add(hemi);
 
-    this.dirLight = new THREE.DirectionalLight(0xffffff, 1.55);
+    // Key light kept close to 1.0 — extra irradiance blows saturated colors to pastel/white
+    this.dirLight = new THREE.DirectionalLight(0xffffff, 1.05);
     this.dirLight.position.set(9, 20, 6);
     this.dirLight.castShadow = true;
     this.dirLight.shadow.mapSize.set(2048, 2048);
@@ -53,7 +55,7 @@ export class Stage {
     this.dirLight.shadow.bias = -0.0004;
     this.scene.add(this.dirLight);
 
-    const fill = new THREE.DirectionalLight(0x9db8ff, 0.22);
+    const fill = new THREE.DirectionalLight(0x9db8ff, 0.1);
     fill.position.set(-10, 8, -8);
     this.scene.add(fill);
 

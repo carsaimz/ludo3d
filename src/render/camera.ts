@@ -2,11 +2,14 @@ import * as THREE from 'three';
 import { Color } from '../game/rules';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+// Ludo King keeps the board axis-aligned: the camera faces the SIDE where the
+// player's yard quadrant sits (red=bottom-left -> south, green=top-left -> west,
+// yellow=top-right -> north, blue=bottom-right -> east), never the corner.
 const AZIMUTH: Record<Color, number> = {
-  red: Math.atan2(-4.5, 4.5),   // bottom-left
-  green: Math.atan2(-4.5, -4.5), // top-left
-  yellow: Math.atan2(4.5, -4.5), // top-right
-  blue: Math.atan2(4.5, 4.5)     // bottom-right
+  red: 0,             // camera south (z+)
+  green: -Math.PI / 2, // camera west (x-)
+  yellow: Math.PI,     // camera north (z-)
+  blue: Math.PI / 2    // camera east (x+)
 };
 
 const easeInOut = (u: number): number => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
@@ -23,8 +26,8 @@ export class CinCam {
 
   constructor(controls: OrbitControls, camera: THREE.PerspectiveCamera) {
     this.controls = controls;
-    // initial showcase position
-    camera.position.set(Math.sin(0.8) * 21, 15, Math.cos(0.8) * 21);
+    // initial showcase position (near top-down, Ludo King feel)
+    camera.position.set(Math.sin(0.8) * 22, 19, Math.cos(0.8) * 22);
     controls.update();
   }
 
@@ -34,7 +37,7 @@ export class CinCam {
     if (on) {
       this.tween = null;
       const sph = this.spherical();
-      this.applySpherical(sph.theta, 0.72, 25);
+      this.applySpherical(sph.theta, 0.55, 26);
     }
   }
 
@@ -52,7 +55,7 @@ export class CinCam {
     this.controls.update();
   }
 
-  focusColor(color: Color, radius = 20): void {
+  focusColor(color: Color, radius = 24): void {
     const cur = this.spherical();
     let to = AZIMUTH[color];
     // shortest angular path
@@ -66,7 +69,7 @@ export class CinCam {
       fromTheta: cur.theta,
       toTheta: cur.theta + d,
       fromPhi: cur.phi,
-      toPhi: 0.66,
+      toPhi: 0.5,
       fromR: cur.r,
       toR: radius
     };
