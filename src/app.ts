@@ -24,7 +24,7 @@ import {
 } from './render/board';
 import { CinCam } from './render/camera';
 import { Stage } from './render/scene';
-import { Token3D, makeMarker } from './render/token';
+import { Token3D } from './render/token';
 import { Hud } from './ui/hud';
 
 type Mode = 'menu' | 'local' | 'bots' | 'host' | 'client';
@@ -77,10 +77,6 @@ export class App {
     for (const c of COLORS) {
       for (let i = 0; i < 4; i++) {
         const tk = new Token3D(c, i);
-        const marker = makeMarker();
-        marker.position.y = 1.0;
-        tk.mesh.add(marker);
-        tk.mesh.userData.marker = marker;
         tk.mesh.visible = false;
         this.stage.scene.add(tk.mesh);
         this.tokens.set(`${c}:${i}`, tk);
@@ -166,16 +162,6 @@ export class App {
       this.hud.dialog(null);
       this.exitToMenu();
     }));
-    $('#btn-cam').addEventListener('click', click(() => {
-      if (this.engine) this.cin.focusColor(this.engine.current.color);
-    }));
-    $('#btn-sound').addEventListener('click', () => {
-      this.settings.sound = !this.settings.sound;
-      this.sfx.enabled = this.settings.sound;
-      this.hud.soundIcon(this.settings.sound);
-      this.saveSettings();
-      if (this.settings.sound) this.sfx.click();
-    });
     document.querySelectorAll('.dlg-close').forEach((b) =>
       b.addEventListener('click', () => this.hud.dialog(null))
     );
@@ -199,7 +185,6 @@ export class App {
     tglSound.addEventListener('change', () => {
       this.settings.sound = tglSound.checked;
       this.sfx.enabled = this.settings.sound;
-      this.hud.soundIcon(this.settings.sound);
       this.saveSettings();
     });
     tglCam.addEventListener('change', () => {
@@ -357,11 +342,9 @@ export class App {
     this.hud.dialog(null);
     this.hud.showMenu(false);
     this.hud.hideCards();
-    this.hud.soundIcon(this.settings.sound);
     for (const tk of this.tokens.values()) {
       tk.mesh.visible = true;
       tk.setHighlighted(false);
-      tk.mesh.userData.marker.visible = false;
     }
     this.layoutAll();
     this.hud.diceReset();
@@ -427,19 +410,7 @@ export class App {
   private updateHud(): void {
     if (!this.engine) return;
     const p = this.engine.current;
-    const isMine = this.isLocalTurnPlayer();
-    let title: string;
-    let sub = '';
-    if (this.engine.phase === 'over') {
-      title = `${this.engine.ranks[0] ? this.engine.players.find((x) => x.color === this.engine!.ranks[0])!.name : ''} ${t('gameWon')}`;
-    } else if (this.mode === 'client') {
-      title = p.color === this.myColor ? t('yourTurn') : `${t('turnOf')} ${p.name}`;
-      sub = this.engine.phase === 'roll' ? (isMine ? t('turnRoll') : t('turnWait')) : isMine ? t('turnPick') : t('turnWait');
-    } else {
-      title = isMine ? t('yourTurn') : `${t('turnOf')} ${p.name}`;
-      sub = this.engine.phase === 'roll' ? (isMine ? t('turnRoll') : t('turnWait')) : isMine ? t('turnPick') : t('turnWait');
-    }
-    this.hud.setTurn(p.color, title, sub);
+    // turn is conveyed visually: active card border, pulsing dice slot and glowing pawns — no text banners
     this.hud.updateCards(this.engine.players, this.engine.tokens, this.engine.turn, p.color);
   }
 
@@ -526,15 +497,12 @@ export class App {
     for (const tk of this.tokens.values()) {
       const isMine = tk.color === color && tokenIdxs.includes(tk.index);
       tk.setHighlighted(isMine);
-      const marker = tk.mesh.userData.marker as THREE.Object3D;
-      marker.visible = isMine;
     }
   }
 
   private clearHighlights(): void {
     for (const tk of this.tokens.values()) {
       tk.setHighlighted(false);
-      (tk.mesh.userData.marker as THREE.Object3D).visible = false;
     }
   }
 
@@ -561,16 +529,11 @@ export class App {
     this.broadcast({ t: 'ev', kind: 'roll', color, value: r.value, turn: this.engine.turn, forfeited: r.forfeited });
     this.sfx.dice();
     await this.hud.rollDice(color, r.value);
-    this.hud.floater(String(r.value));
-    if (r.forfeited) {
-      this.hud.toast(t('threeSixes'));
-    } else if (this.engine.phase === 'pick') {
-      const allYard = this.engine.tokens[this.engine.current.color].every((v) => v === -1);
-      if (r.value !== 6 && allYard) this.hud.toast(t('mustRoll6'));
+    if (this.engine.phase === 'pick') {
       this.sfx.turn();
     } else {
-      this.hud.toast(t('noMoves'));
-      await delay(850);
+      // no legal move: brief pause keeps pacing without any text feedback
+      await delay(700);
     }
     this.busy = false;
     this.broadcastState();
@@ -593,12 +556,6 @@ export class App {
       captures: res.move.captures
     });
     await this.animateMove(res);
-    if (res.move.captures.length > 0) {
-      const victim = this.engine.players.find((p) => p.color === res.move.captures[0].color);
-      this.hud.toast(`${t('captured')} ${victim?.name ?? ''}`, res.color);
-    }
-    if (res.move.finishes) this.hud.toast(t('tokenHome'), res.color);
-    if (res.extra && !res.move.finishes && res.move.captures.length > 0) this.hud.toast(t('extraTurn'), res.color);
     this.busy = false;
     this.broadcastState();
     this.next();
@@ -963,8 +920,6 @@ export class App {
       this.sfx.dice();
       this.hud.setRoll(msg.color, false);
       await this.hud.rollDice(msg.color, msg.value);
-      this.hud.floater(String(msg.value));
-      if (msg.forfeited) this.hud.toast(t('threeSixes'));
     } else if (msg.kind === 'move') {
       this.clearHighlights();
       const fake: MoveResult = {

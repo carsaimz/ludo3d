@@ -43,10 +43,10 @@ export const YARD_CENTER: Record<Color, THREE.Vector2> = {
 export const YARD_SLOT = [new THREE.Vector2(-0.95, -0.95), new THREE.Vector2(0.95, -0.95), new THREE.Vector2(0.95, 0.95), new THREE.Vector2(-0.95, 0.95)];
 
 export const PALETTE: Record<Color, number> = {
-  red: 0xd21f26,
-  green: 0x1da32d,
-  yellow: 0xf6bc00,
-  blue: 0x174fd4
+  red: 0xc23e44,
+  green: 0x2e9c3f,
+  yellow: 0xe0b23a,
+  blue: 0x2f5fce
 };
 
 export const STAR_CELLS = new Set([8, 21, 34, 47]);
@@ -99,7 +99,7 @@ function arrowShape(): THREE.Shape {
 
 /** Materials — saturated albedo + moderate sheen: vivid like Ludo King, never washed to white */
 function mat(color: number, opts: Partial<THREE.MeshPhysicalMaterialParameters> = {}): THREE.MeshPhysicalMaterial {
-  return new THREE.MeshPhysicalMaterial({ color, roughness: 0.38, clearcoat: 0.55, clearcoatRoughness: 0.28, envMapIntensity: 0.3, ...opts });
+  return new THREE.MeshPhysicalMaterial({ color, roughness: 0.42, clearcoat: 0.45, clearcoatRoughness: 0.3, envMapIntensity: 0.28, ...opts });
 }
 
 export function buildBoard(): BoardRefs {
@@ -112,7 +112,7 @@ export function buildBoard(): BoardRefs {
   holePath.setFromPoints(holePts);
   frameShape.holes.push(holePath);
   const frameGeo = new THREE.ExtrudeGeometry(frameShape, { depth: 0.9, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.1, bevelSegments: 4 });
-  const frame = new THREE.Mesh(frameGeo, mat(0x991720, { roughness: 0.28, clearcoat: 0.9, clearcoatRoughness: 0.18, metalness: 0.1, envMapIntensity: 0.55 }));
+  const frame = new THREE.Mesh(frameGeo, mat(0x94343c, { roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.22, metalness: 0.08, envMapIntensity: 0.45 }));
   frame.rotation.x = -Math.PI / 2;
   frame.position.y = -0.7; // extrusion runs upward: ring spans y -0.7 .. +0.3
   frame.castShadow = true;
@@ -126,7 +126,7 @@ export function buildBoard(): BoardRefs {
   trimShape.holes.push(trimHole);
   const trim = new THREE.Mesh(
     new THREE.ExtrudeGeometry(trimShape, { depth: 0.06, bevelEnabled: false }),
-    mat(0xf3b83a, { roughness: 0.25, clearcoat: 0.8, metalness: 0.55, envMapIntensity: 0.9 })
+    mat(0xe8b647, { roughness: 0.3, clearcoat: 0.7, metalness: 0.4, envMapIntensity: 0.7 })
   );
   trim.rotation.x = -Math.PI / 2;
   trim.position.y = 0.1;
@@ -134,7 +134,7 @@ export function buildBoard(): BoardRefs {
 
   // ---- playing surface ----
   const surfGeo = new THREE.ExtrudeGeometry(roundedRectShape(15.2, 15.2, 0.7), { depth: 0.16, bevelEnabled: false });
-  const surf = new THREE.Mesh(surfGeo, mat(0xd9c398, { roughness: 0.6, clearcoat: 0.15 }));
+  const surf = new THREE.Mesh(surfGeo, mat(0xd3c19d, { roughness: 0.62, clearcoat: 0.12 }));
   surf.rotation.x = -Math.PI / 2;
   surf.position.y = -0.02;
   surf.receiveShadow = true;
@@ -143,7 +143,7 @@ export function buildBoard(): BoardRefs {
   // ---- quadrant yard panels ----
   const yardGeo = new THREE.ExtrudeGeometry(roundedRectShape(5.9, 5.9, 0.9), { depth: 0.06, bevelEnabled: false });
   const yardCircleGeo = new THREE.CylinderGeometry(1.95, 1.95, 0.07, 48);
-  const yardCircleMat = mat(0xfbf6e8, { roughness: 0.5, envMapIntensity: 0.2 });
+  const yardCircleMat = mat(0xf1e9d6, { roughness: 0.52, envMapIntensity: 0.18 });
   const tokenSlots: Record<Color, THREE.Vector3[]> = { red: [], green: [], yellow: [], blue: [] };
   (Object.keys(YARD_CENTER) as Color[]).forEach((c) => {
     const panel = new THREE.Mesh(yardGeo, mat(PALETTE[c], { roughness: 0.38 }));
@@ -165,7 +165,7 @@ export function buildBoard(): BoardRefs {
 
   // ---- track tiles ----
   const tileGeo = new THREE.BoxGeometry(0.94, 0.1, 0.94);
-  const tileWhite = mat(0xfdfdf6, { roughness: 0.5, envMapIntensity: 0.25 });
+  const tileWhite = mat(0xf2ecdd, { roughness: 0.52, envMapIntensity: 0.22 });
   const startIdxOf: Record<number, Color> = { 0: 'red', 13: 'green', 26: 'yellow', 39: 'blue' };
   const coloredRing: Set<number> = new Set([0, 13, 26, 39]);
   // home column tiles per color
@@ -191,7 +191,7 @@ export function buildBoard(): BoardRefs {
     if (coloredRing.has(idx)) {
       addTile(col, row, mat(PALETTE[startIdxOf[idx]]));
     } else if (colOfHomeTile.has(`${col},${row}`)) {
-      addTile(col, row, mat(0xfdfdf6, { envMapIntensity: 0.25 }));
+      addTile(col, row, mat(0xf2ecdd, { envMapIntensity: 0.22 }));
     } else {
       addTile(col, row, tileWhite);
     }

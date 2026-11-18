@@ -2,14 +2,14 @@ import * as THREE from 'three';
 import { Color } from '../game/rules';
 import { PALETTE } from './board';
 
-/** Glossy 3D ludo pawn built from a lathe profile. */
+/** Glossy 3D ludo pawn. Movable pawns breathe (scale + own-color glow) — no floating markers. */
 export class Token3D {
   mesh: THREE.Mesh;
   color: Color;
   index: number;
+  private baseScale = 1.32;
   private baseEmissive = 0x000000;
   highlighted = false;
-  private pulseT = 0;
 
   constructor(color: Color, index: number) {
     this.color = color;
@@ -27,13 +27,13 @@ export class Token3D {
       clearcoat: 1,
       clearcoatRoughness: 0.15,
       envMapIntensity: 0.45,
-      emissive: 0x000000,
+      emissive: this.baseEmissive,
       emissiveIntensity: 0.5
     });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.castShadow = true;
     this.mesh.receiveShadow = false;
-    this.mesh.scale.setScalar(1.32);
+    this.mesh.scale.setScalar(this.baseScale);
   }
 
   get position(): THREE.Vector3 {
@@ -43,32 +43,20 @@ export class Token3D {
   setHighlighted(on: boolean): void {
     this.highlighted = on;
     if (!on) {
-      (this.mesh.material as THREE.MeshPhysicalMaterial).emissive.setHex(this.baseEmissive);
-      const marker = this.mesh.userData.marker as THREE.Object3D | undefined;
-      if (marker) marker.visible = false;
+      const mat = this.mesh.material as THREE.MeshPhysicalMaterial;
+      mat.emissive.setHex(this.baseEmissive);
+      this.mesh.scale.setScalar(this.baseScale);
     }
   }
 
-  /** Call every frame: pulsing highlight + marker bobbing. */
+  /** Call every frame: highlighted pawns breathe and glow in their own color. */
   update(dt: number, t: number): void {
+    void dt;
     if (!this.highlighted) return;
     const mat = this.mesh.material as THREE.MeshPhysicalMaterial;
     const k = 0.5 + 0.5 * Math.sin(t * 5.2);
-    mat.emissive.setHex(0xfff0c4).multiplyScalar(0.35 + 0.65 * k);
-    const marker = this.mesh.userData.marker as THREE.Object3D | undefined;
-    if (marker && marker.visible) {
-      marker.position.y = 0.95 + Math.sin(t * 4.5) * 0.08;
-      marker.rotation.y += dt * 2.2;
-    }
+    mat.emissive.setHex(PALETTE[this.color]);
+    mat.emissiveIntensity = 0.25 + 0.45 * k;
+    this.mesh.scale.setScalar(this.baseScale * (1 + 0.09 * k));
   }
-}
-
-/** Floating cone marker that sits above a movable token. */
-export function makeMarker(): THREE.Mesh {
-  const geo = new THREE.ConeGeometry(0.13, 0.3, 12);
-  geo.rotateX(Math.PI); // point down
-  const mat = new THREE.MeshPhysicalMaterial({ color: 0xffd764, emissive: 0x8a5a00, emissiveIntensity: 0.8, roughness: 0.3, clearcoat: 0.8 });
-  const m = new THREE.Mesh(geo, mat);
-  m.visible = false;
-  return m;
 }

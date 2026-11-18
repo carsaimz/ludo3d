@@ -26,7 +26,7 @@ export class Stage {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     // Neutral tone mapping keeps saturated board colors vivid (ACES washes them toward pastel/white)
     this.renderer.toneMapping = THREE.NeutralToneMapping;
-    this.renderer.toneMappingExposure = 1.0;
+    this.renderer.toneMappingExposure = 0.95;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.scene = new THREE.Scene();

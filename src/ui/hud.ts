@@ -87,7 +87,6 @@ export class Hud {
       const nameEl = $(`#pn-${p.color}`);
       let label = p.name;
       if (p.kind === 'bot') label = `${t('botName')} · ${p.name}`;
-      if (p.color === currentTurnColor) label = `▸ ${label}`;
       nameEl.textContent = label;
       const av = $(`#av-${p.color}`);
       av.textContent = (p.name || '?').charAt(0).toUpperCase();
@@ -100,20 +99,6 @@ export class Hud {
 
   hideCards(): void {
     (Object.keys(CARD_POS) as Color[]).forEach((c) => $(`#card-${c}`).classList.add('hidden'));
-  }
-
-  setTurn(color: Color | null, title: string, sub?: string): void {
-    const banner = $('#turn-banner');
-    if (!color) {
-      $('#turn-text').textContent = title;
-      $('#turn-dot').style.background = 'var(--gold)';
-      return;
-    }
-    $('#turn-dot').style.background = HEX[color];
-    $('#turn-text').textContent = sub ? `${title} · ${sub}` : title;
-    banner.classList.remove('shake');
-    void banner.offsetWidth;
-    banner.classList.add('shake');
   }
 
   /** Light up the current player's dice slot; `tappable` = local human may roll. */
@@ -170,14 +155,6 @@ export class Hud {
     window.setTimeout(() => el.remove(), life * 1000 + 400);
   }
 
-  floater(text: string): void {
-    const el = document.createElement('div');
-    el.className = 'floater';
-    el.textContent = text;
-    $('#floaters').appendChild(el);
-    window.setTimeout(() => el.remove(), 1200);
-  }
-
   confetti(): void {
     const wrap = document.createElement('div');
     wrap.className = 'confetti';
@@ -199,10 +176,6 @@ export class Hud {
   dialog(id: string | null): void {
     document.querySelectorAll('.dialog').forEach((d) => d.classList.add('hidden'));
     if (id) $(id).classList.remove('hidden');
-  }
-
-  soundIcon(on: boolean): void {
-    $('#ic-sound').outerHTML = Hud.iconSound(on);
   }
 
   static bindSeg(sel: string, onChange: (v: string) => void, initial?: string): void {
