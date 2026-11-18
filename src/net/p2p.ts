@@ -12,7 +12,7 @@ export type NetMsg =
   | { t: 'lobby'; seats: ({ name: string; color: Color; kind: 'human' | 'bot' } | null)[]; hostStartable: boolean }
   | { t: 'start'; players: PlayerInfo[]; you: Color }
   | { t: 'intent'; a: 'roll' | 'move'; token?: number }
-  | { t: 'ev'; kind: 'roll'; value: number; turn: number; forfeited?: boolean }
+  | { t: 'ev'; kind: 'roll'; color: Color; value: number; turn: number; forfeited?: boolean }
   | { t: 'ev'; kind: 'move'; color: Color; token: number; from: number; to: number; captures: { color: Color; token: number }[] }
   | { t: 'ev'; kind: 'turn'; color: Color; extra: boolean }
   | { t: 'state'; snap: unknown }

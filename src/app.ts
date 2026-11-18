@@ -23,7 +23,6 @@ import {
   cellWorld
 } from './render/board';
 import { CinCam } from './render/camera';
-import { Dice3D } from './render/dice';
 import { Stage } from './render/scene';
 import { Token3D, makeMarker } from './render/token';
 import { Hud } from './ui/hud';
@@ -43,7 +42,6 @@ const $ = <T extends HTMLElement>(sel: string): T => document.querySelector(sel)
 export class App {
   private stage!: Stage;
   private cin!: CinCam;
-  private dice!: Dice3D;
   private hud!: Hud;
   private sfx = new Sfx();
   private board!: BoardRefs;
@@ -71,8 +69,8 @@ export class App {
     this.cin = new CinCam(this.stage.controls, this.stage.camera);
     this.board = buildBoard();
     this.stage.scene.add(this.board.group);
-    this.dice = new Dice3D(this.stage.scene);
     this.hud = new Hud();
+    this.hud.onDiceTap = (color) => this.onRollButton(color);
 
     // create all tokens (hidden until a game starts)
     for (const c of COLORS) {
@@ -90,7 +88,6 @@ export class App {
 
     this.stage.addUpdater((dt) => {
       this.time += dt;
-      this.dice.update(dt);
       this.cin.update(dt);
       for (const tk of this.tokens.values()) tk.update(dt, this.time);
     });
@@ -171,7 +168,6 @@ export class App {
     $('#btn-cam').addEventListener('click', click(() => {
       if (this.engine) this.cin.focusColor(this.engine.current.color);
     }));
-    $('#btn-roll').addEventListener('click', click(() => this.onRollButton()));
     $('#btn-sound').addEventListener('click', () => {
       this.settings.sound = !this.settings.sound;
       this.sfx.enabled = this.settings.sound;
@@ -367,11 +363,11 @@ export class App {
       tk.mesh.userData.marker.visible = false;
     }
     this.layoutAll();
-    this.dice.hide();
+    this.hud.diceReset();
     this.cin.menuOrbit(false);
     if (this.settings.autoCam) this.cin.focusColor(this.engine.current.color);
     else this.cin.focusColor(this.engine.current.color);
-    this.hud.setRoll(false);
+    this.hud.setRoll(null, false);
     this.updateHud();
     this.next();
   }
@@ -406,10 +402,10 @@ export class App {
     this.engine = null;
     this.clearTimers();
     this.busy = false;
-    this.dice.hide();
+    this.hud.diceReset();
     for (const tk of this.tokens.values()) tk.mesh.visible = false;
     this.hud.hideCards();
-    this.hud.setRoll(false);
+    this.hud.setRoll(null, false);
     this.hud.showMenu(true);
     this.cin.menuOrbit(true);
     this.net?.leave();
@@ -474,19 +470,19 @@ export class App {
     if (this.engine.phase === 'roll') {
       this.highlightLegal([]);
       if (this.mode === 'client') {
-        this.hud.setRoll(p.color === this.myColor, p.color === this.myColor);
+        this.hud.setRoll(p.color, p.color === this.myColor);
       } else if (p.kind === 'bot') {
-        this.hud.setRoll(false);
+        this.hud.setRoll(p.color, false);
         this.schedule(() => {
           if (this.engine && this.engine.phase === 'roll') void this.doRoll();
         }, 620 + Math.random() * 620);
       } else if (this.isLocalTurnPlayer()) {
-        this.hud.setRoll(true, true);
+        this.hud.setRoll(p.color, true);
       } else {
-        this.hud.setRoll(false);
+        this.hud.setRoll(p.color, false);
       }
     } else if (this.engine.phase === 'pick') {
-      this.hud.setRoll(false);
+      this.hud.setRoll(p.color, false);
       if (this.mode === 'client') {
         if (p.color === this.myColor) {
           this.highlightLegal(this.engine.legalMoves.map((m) => m.token));
@@ -542,26 +538,28 @@ export class App {
   }
 
   // ---------------- actions ----------------
-  private onRollButton(): void {
-    if (this.busy || !this.engine) return;
+  private onRollButton(color?: Color): void {
+    if (this.busy || !this.engine || this.engine.phase !== 'roll') return;
+    if (color && color !== this.engine.current.color) return; // tapped someone else's dice
     if (this.mode === 'client') {
-      if (this.engine.phase === 'roll' && this.engine.current.color === this.myColor) {
+      if (this.engine.current.color === this.myColor) {
         this.net?.broadcast({ t: 'intent', a: 'roll' });
       }
       return;
     }
-    if (this.engine.phase === 'roll' && this.isLocalTurnPlayer()) void this.doRoll();
+    if (this.isLocalTurnPlayer()) void this.doRoll();
   }
 
-  /** Host / offline: roll locally on the engine. */
+  /** Host / offline: roll locally on the engine, animate the player's dice slot. */
   private async doRoll(): Promise<void> {
     if (!this.engine || this.busy) return;
+    const color = this.engine.current.color;
     this.busy = true;
-    this.hud.setRoll(false);
+    this.hud.setRoll(color, false);
     const r = this.engine.roll();
-    this.broadcast({ t: 'ev', kind: 'roll', value: r.value, turn: this.engine.turn, forfeited: r.forfeited });
+    this.broadcast({ t: 'ev', kind: 'roll', color, value: r.value, turn: this.engine.turn, forfeited: r.forfeited });
     this.sfx.dice();
-    await new Promise<void>((res) => this.dice.rollTo(r.value, res));
+    await this.hud.rollDice(color, r.value);
     this.hud.floater(String(r.value));
     if (r.forfeited) {
       this.hud.toast(t('threeSixes'));
@@ -736,7 +734,7 @@ export class App {
     const ranks = this.engine.finalRanks();
     const ranked = ranks.map((c) => this.engine!.players.find((p) => p.color === c)!);
     this.clearHighlights();
-    this.hud.setRoll(false);
+    this.hud.setRoll(null, false);
     $('#win-title').textContent =
       this.mode === 'client' || this.mode === 'host'
         ? `${ranked[0].name} ${t('gameWon')}`
@@ -941,7 +939,7 @@ export class App {
         break;
       }
       case 'state': {
-        if (this.busy || this.dice.isRolling) {
+        if (this.busy || this.hud.isRolling) {
           this.pendingState = msg.snap as Snapshot;
         } else {
           this.clientApplyState(msg.snap as Snapshot);
@@ -962,7 +960,8 @@ export class App {
     this.busy = true;
     if (msg.kind === 'roll') {
       this.sfx.dice();
-      await new Promise<void>((res) => this.dice.rollTo(msg.value, res));
+      this.hud.setRoll(msg.color, false);
+      await this.hud.rollDice(msg.color, msg.value);
       this.hud.floater(String(msg.value));
       if (msg.forfeited) this.hud.toast(t('threeSixes'));
     } else if (msg.kind === 'move') {

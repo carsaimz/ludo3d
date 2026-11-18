@@ -10,10 +10,14 @@ const CARD_POS: Record<Color, string> = {
   blue: 'card-pos-br'
 };
 const AVATAR_CLS: Record<Color, string> = { red: 'pc-red', green: 'pc-green', yellow: 'pc-yellow', blue: 'pc-blue' };
-const HEX: Record<Color, string> = { red: '#e0393b', green: '#3fa344', yellow: '#f6c62e', blue: '#2472d4' };
+const DS_CLS: Record<Color, string> = { red: 'ds-red', green: 'ds-green', yellow: 'ds-yellow', blue: 'ds-blue' };
+const HEX: Record<Color, string> = { red: '#e43131', green: '#2eb23b', yellow: '#fccf1f', blue: '#2265e8' };
 
 export class Hud {
   onSoundToggle: ((on: boolean) => void) | null = null;
+  /** Fired when the active player's dice slot is tapped. */
+  onDiceTap: ((color: Color) => void) | null = null;
+  private rolling = false;
 
   constructor() {
     this.buildPlayerCards();
@@ -31,9 +35,29 @@ export class Hud {
         <div class="pinfo">
           <div class="pname" id="pn-${c}"></div>
           <div class="homes" id="hm-${c}">${'<span class="home-dot"></span>'.repeat(4)}</div>
-        </div>`;
+        </div>
+        <button class="dice-slot ${DS_CLS[c]}" id="ds-${c}" aria-label="${t('roll')}">${Hud.diceSvg(5)}</button>`;
       wrap.appendChild(div);
+      const slot = div.querySelector(`#ds-${c}`) as HTMLButtonElement;
+      slot.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (slot.classList.contains('tap')) this.onDiceTap?.(c);
+      });
     });
+  }
+
+  /** SVG die face (no emojis — pure vector). */
+  static diceSvg(n: number): string {
+    const P: Record<number, [number, number][]> = {
+      1: [[50, 50]],
+      2: [[26, 26], [74, 74]],
+      3: [[26, 26], [50, 50], [74, 74]],
+      4: [[26, 26], [74, 26], [26, 74], [74, 74]],
+      5: [[26, 26], [74, 26], [50, 50], [26, 74], [74, 74]],
+      6: [[26, 24], [74, 24], [26, 50], [74, 50], [26, 76], [74, 76]]
+    };
+    const pips = (P[n] ?? P[5]).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="#1d2534"/>`).join('');
+    return `<svg class="die" viewBox="0 0 100 100" aria-hidden="true"><rect x="5" y="5" width="90" height="90" rx="21" fill="#ffffff" stroke="#b9c6dd" stroke-width="4"/>${pips}</svg>`;
   }
 
   static iconSound(on: boolean): string {
@@ -92,10 +116,49 @@ export class Hud {
     banner.classList.add('shake');
   }
 
-  setRoll(visible: boolean, enabled = true): void {
-    const btn = $('#btn-roll');
-    btn.classList.toggle('hidden', !visible);
-    (btn as HTMLButtonElement).disabled = !enabled;
+  /** Light up the current player's dice slot; `tappable` = local human may roll. */
+  setRoll(color: Color | null, tappable = false): void {
+    (Object.keys(CARD_POS) as Color[]).forEach((c) => {
+      const slot = $(`#ds-${c}`) as HTMLButtonElement;
+      slot.classList.toggle('on', c === color);
+      slot.classList.toggle('tap', c === color && tappable);
+    });
+  }
+
+  /** Shake + cycle random faces, then settle on the real value (predetermined by the engine for P2P sync). */
+  rollDice(color: Color, value: number, ms = 780): Promise<void> {
+    const slot = $(`#ds-${color}`) as HTMLButtonElement;
+    slot.classList.remove('pop');
+    slot.classList.add('rolling');
+    this.rolling = true;
+    return new Promise((resolve) => {
+      const cycle = window.setInterval(() => {
+        slot.innerHTML = Hud.diceSvg(1 + Math.floor(Math.random() * 6));
+      }, 80);
+      window.setTimeout(() => {
+        window.clearInterval(cycle);
+        slot.classList.remove('rolling');
+        slot.innerHTML = Hud.diceSvg(value);
+        void slot.offsetWidth;
+        slot.classList.add('pop');
+        this.rolling = false;
+        window.setTimeout(resolve, 340);
+      }, ms);
+    });
+  }
+
+  get isRolling(): boolean {
+    return this.rolling;
+  }
+
+  /** Back to the idle dim state (used on game start / exit / finish). */
+  diceReset(): void {
+    this.rolling = false;
+    (Object.keys(CARD_POS) as Color[]).forEach((c) => {
+      const slot = $(`#ds-${c}`) as HTMLButtonElement;
+      slot.classList.remove('on', 'tap', 'rolling', 'pop');
+      slot.innerHTML = Hud.diceSvg(5);
+    });
   }
 
   toast(text: string, colorDot?: Color, life = 1.9): void {
@@ -169,7 +232,6 @@ export class Hud {
   renderSeats(seats: { name: string; color: Color; kind: string }[]): void {
     const box = $('#seats-box');
     box.innerHTML = `<p class="room-label">${t('seats')}</p>`;
-    const order: Color[] = ['red', 'green', 'yellow', 'blue'];
     for (const s of seats) {
       const div = document.createElement('div');
       div.className = 'seat';

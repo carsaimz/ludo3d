@@ -24,8 +24,9 @@ export class Stage {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.12;
+    // Neutral tone mapping keeps saturated board colors vivid (ACES washes them toward pastel/white)
+    this.renderer.toneMapping = THREE.NeutralToneMapping;
+    this.renderer.toneMappingExposure = 1.0;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.scene = new THREE.Scene();
@@ -36,10 +37,10 @@ export class Stage {
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-    const hemi = new THREE.HemisphereLight(0xcfe4ff, 0x1a2438, 0.55);
+    const hemi = new THREE.HemisphereLight(0xdceaff, 0x2a3040, 0.42);
     this.scene.add(hemi);
 
-    this.dirLight = new THREE.DirectionalLight(0xfff3df, 1.65);
+    this.dirLight = new THREE.DirectionalLight(0xffffff, 1.55);
     this.dirLight.position.set(9, 20, 6);
     this.dirLight.castShadow = true;
     this.dirLight.shadow.mapSize.set(2048, 2048);
@@ -52,7 +53,7 @@ export class Stage {
     this.dirLight.shadow.bias = -0.0004;
     this.scene.add(this.dirLight);
 
-    const fill = new THREE.DirectionalLight(0x9db8ff, 0.35);
+    const fill = new THREE.DirectionalLight(0x9db8ff, 0.22);
     fill.position.set(-10, 8, -8);
     this.scene.add(fill);
 

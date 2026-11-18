@@ -23,10 +23,10 @@ export class Token3D {
     const geo = new THREE.LatheGeometry(pts, 28);
     const mat = new THREE.MeshPhysicalMaterial({
       color: PALETTE[color],
-      roughness: 0.22,
+      roughness: 0.3,
       clearcoat: 1,
-      clearcoatRoughness: 0.12,
-      envMapIntensity: 1.1,
+      clearcoatRoughness: 0.18,
+      envMapIntensity: 0.7,
       emissive: 0x000000,
       emissiveIntensity: 0.5
     });
